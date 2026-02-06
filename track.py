@@ -10,11 +10,11 @@ import threading
 if getattr(sys, 'frozen', False):
     application_path = sys._MEIPASS
     DIR_MODELS = os.path.join(application_path, "models")
-    DIR_OUT = os.path.join(os.path.expanduser("~"), "Desktop", "Nexus_Output")
+    DIR_OUT = os.path.join(os.path.expanduser("~"), "Downloads", "Nexus_Output")
     os.makedirs(DIR_OUT, exist_ok=True)
 else:
     DIR_MODELS = "models"
-    DIR_OUT = "out"
+    DIR_OUT = os.path.join(os.path.expanduser("~"), "Downloads", "Nexus_Output")
 MODEL_PATH = os.path.join(DIR_MODELS, "hand.task")
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
 FACE_MODEL_PATH = os.path.join(DIR_MODELS, "face.task")
@@ -24,12 +24,14 @@ OBJECT_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/object_detec
 
 INFERENCE_WIDTH = 640
 INFERENCE_HEIGHT = 360
-INFERENCE_WIDTH_FAST = 384
-INFERENCE_HEIGHT_FAST = 216
+INFERENCE_WIDTH_FAST = 320
+INFERENCE_HEIGHT_FAST = 180
 FACE_STAGGER_FRAMES = 3
 GRAPH_STAGGER_FRAMES = 2
 CAMERA_WIDTH_FAST = 640
 CAMERA_HEIGHT_FAST = 480
+TARGET_FPS_FAST = 60.0
+TARGET_FPS_QUALITY = 60.0
 
 FACE_MESH_CONNECTIONS = None
 
@@ -884,6 +886,47 @@ def show_startup_menu():
     return fast_mode
 
 
+def open_camera_with_retry(camera_index, backend, max_attempts=30, wait_sec=1.0, frozen=False):
+    wait_per_key_ms = 100
+    keys_per_sec = max(1, int(1000 // wait_per_key_ms))
+    for attempt in range(max_attempts):
+        cap = cv2.VideoCapture(camera_index, backend)
+        if cap.isOpened():
+            ret, frame = cap.read()
+            if ret and frame is not None:
+                return cap, frame, True
+            cap.release()
+        else:
+            cap = None
+        if frozen:
+            w, h = 480, 200
+            win = "Nexus — Camera"
+            if attempt == 0:
+                cv2.namedWindow(win, cv2.WINDOW_NORMAL)
+                cv2.resizeWindow(win, w, h)
+            screen = np.full((h, w, 3), DARK_BG, dtype=np.uint8)
+            cv2.putText(screen, "Waiting for camera permission...", (30, 80), FONT_FACE, 0.6, TEXT, 1)
+            cv2.putText(screen, "Grant access in System Settings if prompted.", (30, 120), FONT_FACE, 0.5, TEXT, 1)
+            cv2.putText(screen, "Retrying...  Press Q to quit", (30, 160), FONT_FACE, 0.45, CORE, 1)
+            cv2.imshow(win, screen)
+            for _ in range(int(wait_sec * keys_per_sec)):
+                if cv2.waitKey(wait_per_key_ms) & 0xFF == ord('q'):
+                    try:
+                        cv2.destroyWindow(win)
+                    except Exception:
+                        pass
+                    return None, None, False
+        else:
+            print("!! Waiting for camera permission... (grant in System Settings if prompted)")
+            time.sleep(wait_sec)
+    if frozen:
+        try:
+            cv2.destroyWindow("Nexus — Camera")
+        except Exception:
+            pass
+    return None, None, False
+
+
 def show_profile_dialog():
     w, h = 640, 380
     win_name = "Nexus — Select Profile"
@@ -995,7 +1038,7 @@ def main():
         opts = vision.ObjectDetectorOptions(
             base_options=python.BaseOptions(model_asset_path=object_model_path),
             running_mode=vision.RunningMode.VIDEO,
-            max_results=5,
+            max_results=3 if fast_mode else 5,
             score_threshold=0.5,
         )
         object_detector = vision.ObjectDetector.create_from_options(opts)
@@ -1016,20 +1059,23 @@ def main():
         print("\n[ 04 ] HANDSHAKE & PERMISSIONS")
     time.sleep(0.4)
 
-    cap = cv2.VideoCapture(camera_index, backend)
-    
-    if not cap.isOpened():
-        print("!! CRITICAL: SENSOR_ACCESS_DENIED")
-        print(">> REMEDIATION: SETTINGS > PRIVACY > CAMERA > TERMINAL [GRANT]")
+    frozen = getattr(sys, 'frozen', False)
+    cap, test_frame, opened = open_camera_with_retry(camera_index, backend, max_attempts=30, wait_sec=1.0, frozen=frozen)
+    if not opened or cap is None or test_frame is None:
+        print("!! CRITICAL: SENSOR_ACCESS_DENIED or TIMEOUT")
+        print(">> REMEDIATION: SETTINGS > PRIVACY > CAMERA > NEXUS [GRANT] then reopen the app")
+        if frozen:
+            try:
+                cv2.destroyWindow("Nexus — Camera")
+            except Exception:
+                pass
         sys.exit(1)
-    
-    ret, test_frame = cap.read()
-    if not ret or test_frame is None:
-        print("!! CRITICAL: BUFFER_READ_FAILURE")
-        print(">> REMEDIATION: SETTINGS > PRIVACY > CAMERA [VERIFY_PERMISSIONS]")
-        cap.release()
-        sys.exit(1)
-    
+    if frozen:
+        try:
+            cv2.destroyWindow("Nexus — Camera")
+        except Exception:
+            pass
+
     test_height, test_width = test_frame.shape[:2]
     if not getattr(sys, 'frozen', False):
         if test_width == 1920 and test_height == 1080:
@@ -1037,6 +1083,9 @@ def main():
         else:
             print(f">> [ SUCCESS ] CAMERA_LINK_ESTABLISHED ({test_width}x{test_height})")
     cap.set(cv2.CAP_PROP_FPS, 30)
+    buf_prop = getattr(cv2, 'CAP_PROP_BUFFERSIZE', None)
+    if buf_prop is not None:
+        cap.set(buf_prop, 1)
     if fast_mode:
         cap.set(cv2.CAP_PROP_FRAME_WIDTH, CAMERA_WIDTH_FAST)
         cap.set(cv2.CAP_PROP_FRAME_HEIGHT, CAMERA_HEIGHT_FAST)
@@ -1107,13 +1156,13 @@ def main():
     fps_start_time = time.time()
     fps_frame_count = 0
     fps_current = 0.0
-    target_fps = 30.0
+    target_fps = TARGET_FPS_FAST if fast_mode else TARGET_FPS_QUALITY
     frame_time = 1.0 / target_fps
     frame_index = 0
     last_face_result = None
     last_object_result = None
     last_graph_panel = None
-    object_stagger = 5 if fast_mode else 3
+    object_stagger = 7 if fast_mode else 3
     
     hand_centers_history = []
     face_centers_history = []
@@ -1134,7 +1183,7 @@ def main():
             inference_frame = np.ascontiguousarray(inference_frame)
             mp_image = Image(image_format=ImageFormat.SRGB, data=inference_frame)
             
-            timestamp_ms = int(frame_index * 1000 / 30)
+            timestamp_ms = int(frame_index * 1000 / target_fps)
             frame_index += 1
             
             detection_result = detector.detect_for_video(mp_image, timestamp_ms)

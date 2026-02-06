@@ -17,28 +17,55 @@ Real-time hand, face, and object tracking using OpenCV and MediaPipe. Runs as a 
 - Camera (built-in or external)
 - macOS or Windows for packaged builds
 
-## Run from source
+## Install and run from terminal (no IDE)
+
+Install Python 3.10+ from [python.org](https://www.python.org/downloads/) if needed. Then use a terminal (Terminal.app on Mac, Command Prompt or PowerShell on Windows).
+
+### Mac (Terminal)
 
 ```bash
 git clone https://github.com/gavingrangerr/Nexus-HandTrack.git
 cd Nexus-HandTrack
-python -m venv venv
+python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
 python track.py
 ```
 
-Windows: use `venv\Scripts\activate` before `pip install`. At the prompt choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
+### Windows (Command Prompt or PowerShell)
+
+**Command Prompt:**
+
+```bat
+git clone https://github.com/gavingrangerr/Nexus-HandTrack.git
+cd Nexus-HandTrack
+python -m venv venv
+venv\Scripts\activate
+pip install -r requirements.txt
+python track.py
+```
+
+**PowerShell:**
+
+```powershell
+git clone https://github.com/gavingrangerr/Nexus-HandTrack.git
+cd Nexus-HandTrack
+python -m venv venv
+.\venv\Scripts\Activate.ps1
+pip install -r requirements.txt
+python track.py
+```
+
+If PowerShell blocks the script, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once, then try again.
+
+At launch choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
 
 ## Build for macOS (.dmg)
 
 Run on a Mac. Produces `Nexus.app` and `~/Downloads/Nexus.dmg`.
 
-```bash
-./scripts/build.sh .dmg
-```
 
-Mac-only script (same result):
+Mac-only script:
 
 ```bash
 ./scripts/build_mac_app.sh
@@ -95,7 +122,7 @@ Nexus-HandTrack/
 | C | Start gesture capture (type a name, then S to save) |
 | R | Start/stop recording the graph panel to video |
 
-Recordings and output go to `~/Desktop/Nexus_Output` (or `out/` when run from source).
+Recordings and output go to `~/Downloads/Nexus_Output` (Mac) or `%USERPROFILE%\Downloads\Nexus_Output` (Windows).
 
 ## License
 

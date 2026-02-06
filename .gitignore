@@ -1,0 +1,15 @@
+venv/
+build/
+dist/
+*.pyc
+__pycache__/
+.Python
+*.egg-info/
+.eggs/
+.DS_Store
+*.icns
+icon.iconset/
+dmg_stage/
+*.log
+models/*.task
+models/*.tflite

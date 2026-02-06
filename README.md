@@ -20,71 +20,72 @@ Real-time hand, face, and object tracking using OpenCV and MediaPipe. Runs as a 
 ## Run from source
 
 ```bash
-git clone https://github.com/YOUR_USERNAME/Nexus.git
-cd Nexus
+git clone https://github.com/gavingrangerr/Nexus-HandTrack.git
+cd Nexus-HandTrack
 python -m venv venv
-source venv/bin/activate   # Windows: venv\Scripts\activate
+source venv/bin/activate
 pip install -r requirements.txt
-```
-
-Models download on first run. Then:
-
-```bash
 python track.py
 ```
 
-At the prompt choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked.
+Windows: use `venv\Scripts\activate` before `pip install`. At the prompt choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
 
 ## Build for macOS (.dmg)
 
-Build on a Mac. Produces `Nexus.app` and a DMG in `~/Downloads/Nexus.dmg`.
+Run on a Mac. Produces `Nexus.app` and `~/Downloads/Nexus.dmg`.
 
 ```bash
-./build.sh .dmg
+./scripts/build.sh .dmg
 ```
 
-With no argument on Mac, `./build.sh` defaults to `.dmg`.
-
-Or the Mac-only script:
+Mac-only script (same result):
 
 ```bash
-./build_mac_app.sh
+./scripts/build_mac_app.sh
 ```
 
-Optional: add `icon.png` (1024×1024) in the project root; the build will use it for the app icon.
+With no argument on Mac, `./scripts/build.sh` defaults to `.dmg`. Optional: add `icon.png` (1024×1024) in the project root for the app icon.
 
 ## Build for Windows (.exe)
 
-Build on Windows. Produces `dist/Nexus/Nexus.exe` and optionally copies it to `%USERPROFILE%\Downloads\Nexus.exe`.
+Run on Windows. Produces `dist/Nexus/Nexus.exe` and optionally copies to `%USERPROFILE%\Downloads\Nexus.exe`.
 
-**Command Prompt:**
+**Command Prompt (from repo root):**
 
 ```bat
-build.bat
+scripts\build.bat
 ```
 
 **Git Bash or WSL:**
 
 ```bash
-./build.sh .exe
+./scripts/build.sh .exe
 ```
 
-With no argument on Windows, `./build.sh` defaults to `.exe`.
+With no argument on Windows, `./scripts/build.sh` defaults to `.exe`.
 
 ## Project layout
 
 ```
-Nexus/
-├── track.py           # Main app (run or entry for PyInstaller)
-├── track.spec         # PyInstaller spec (Mac .app / Windows .exe)
+Nexus-HandTrack/
+├── .gitignore
+├── README.md
 ├── requirements.txt
-├── build.sh           # Cross-platform build: .dmg (Mac) or .exe (Windows)
-├── build_mac_app.sh   # Mac-only: .app + DMG
-├── build.bat          # Windows-only: .exe
-├── icon.png           # Optional 1024×1024 app icon
-├── models/            # Filled by build (hand.task, face.task, object_detector.task)
-└── README.md
+├── track.py
+├── track.spec
+├── icon.png
+├── models
+├── scripts
+│   ├── build.sh
+│   ├── build_mac_app.sh
+│   └── build.bat
+├── venv
+├── build
+└── dist
 ```
+
+- **Root:** App entry (`track.py`), PyInstaller spec (`track.spec`), deps (`requirements.txt`), optional `icon.png`. `models/` is populated by the build (hand/face/object assets).
+- **scripts/:** Build scripts; run from repo root as above. `venv/`, `build/`, `dist/` are created by the build and ignored by git.
 
 ## Controls
 

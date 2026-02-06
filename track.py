@@ -1286,7 +1286,7 @@ def main():
                     current_hand_centers.append((center_x, center_y))
                     
                     if not use_prev_graph:
-                        display_lines.append(f"Hand {idx+1} ({handedness}): {finger_count} fingers | {gesture}")
+                        display_lines.append(f"Hand {idx+1} ({handedness}): {finger_count} fingers")
                 
                 while len(current_hand_centers) < 2:
                     current_hand_centers.append(None)
@@ -1313,7 +1313,7 @@ def main():
                             h, w = frame.shape[:2]
                             finger_count, gesture = count_fingers(hand_landmarks, w, h)
                             handedness = get_handedness_label(detection_result, idx)
-                            hand_label = f"HAND {idx+1} ({handedness.upper()}): {finger_count} FINGERS | {gesture.upper()}"
+                            hand_label = f"HAND {idx+1} ({handedness.upper()}): {finger_count} FINGERS"
                             add_glow_effect(graph_panel, int(10 * PADDING_SCALE), label_y + line_idx * LABEL_ROW, hand_label, FONT_FACE, FONT_MED, CORE, 1, 2)
                             line_idx += 1
                         if num_faces > 0:

@@ -29,6 +29,7 @@ a = Analysis(
         'mediapipe.tasks',
         'mediapipe.tasks.python',
         'mediapipe.tasks.python.vision',
+        'mediapipe.tasks.python.vision.pose_landmarker',
         'mediapipe.tasks.python.core',
         'mediapipe.tasks.python.core.optional_dependencies',
         'mediapipe.python',

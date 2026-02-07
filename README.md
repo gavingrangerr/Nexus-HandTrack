@@ -60,18 +60,47 @@ If PowerShell blocks the script, run `Set-ExecutionPolicy -ExecutionPolicy Remot
 
 At launch choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
 
-## Build for macOS (.dmg)
+## Get the newest updates (Mac terminal)
 
-Run on a Mac. Produces `Nexus.app` and `~/Downloads/Nexus.dmg`.
+If you already have the repo and want the latest code from GitHub:
 
+```bash
+cd Nexus-HandTrack
+git pull
+source venv/bin/activate
+pip install -r requirements.txt
+python track.py
+```
 
-Mac-only script:
+If you get merge conflicts, ask the repo owner or run `git status` and resolve. To discard local changes and match GitHub exactly: `git fetch origin` then `git reset --hard origin/main` (replace `main` with your default branch if different).
+
+## Mac: run from terminal and build the DMG
+
+All from **Terminal.app** (no IDE). One-time setup, then either run the app or build the installer.
+
+**1. Clone and install (once):**
+
+```bash
+git clone https://github.com/gavingrangerr/Nexus-HandTrack.git
+cd Nexus-HandTrack
+python3 -m venv venv
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**2a. Run from source:**
+
+```bash
+python track.py
+```
+
+**2b. Build the Mac app and DMG:**
 
 ```bash
 ./scripts/build_mac_app.sh
 ```
 
-With no argument on Mac, `./scripts/build.sh` defaults to `.dmg`. Optional: add `icon.png` (1024×1024) in the project root for the app icon.
+This creates `dist/Nexus.app` and puts `Nexus.dmg` in your Downloads folder. Optional: add `icon.png` (1024×1024) in the project root for the app icon.
 
 ## Build for Windows (.exe)
 
@@ -120,7 +149,8 @@ Nexus-HandTrack/
 |-----|--------|
 | Q | Quit |
 | C | Start gesture capture (type a name, then S to save) |
-| R | Start/stop recording the graph panel to video |
+| R | Start/stop recording the graph panel to video and log tracking data (hands, wrists, elbows, shoulders, face) to a CSV with the same timestamp; both saved to Nexus_Output |
+| L | Start/stop logging only (no video) to CSV |
 
 Recordings and output go to `~/Downloads/Nexus_Output` (Mac) or `%USERPROFILE%\Downloads\Nexus_Output` (Windows).
 

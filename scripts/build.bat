@@ -28,7 +28,7 @@ pip install -q -r requirements.txt
 if not exist "models" mkdir models
 echo ==^> Downloading MediaPipe models...
 python -c "import urllib.request,os; m=('hand.task','face.task','object_detector.task'); u=('https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task','https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task','https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite'); o=('models/hand.task','models/face.task','models/object_detector.task'); [urllib.request.urlretrieve(u[i], o[i]) if not os.path.isfile(o[i]) else None for i in range(3)]"
-if not exist "models\object_detector.task" python -c "import urllib.request; urllib.request.urlretrieve('https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite', 'models/object_detector.task')"
+REM Object detection removed - only downloading hand and face models
 
 echo ==^> Cleaning previous build...
 if exist build rmdir /s /q build

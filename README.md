@@ -1,12 +1,11 @@
 # Nexus
 
-Real-time hand, face, and object tracking using OpenCV and MediaPipe. Runs as a desktop app on macOS (DMG) and Windows (EXE) or from source with Python.
+Real-time hand and face tracking using OpenCV and MediaPipe. Runs as a desktop app on macOS (DMG) and Windows (EXE) or from source with Python.
 
 ## Features
 
 - Hand landmark tracking with gesture recognition (fist, point, peace, etc.)
 - Face mesh overlay
-- Object detection (bottles, cups, etc.)
 - X/Y position graphs with smooth trails
 - Resizable window; close with Q or the window close button
 - Profile selection at launch: Fast (FPS), Quality (visual), or Auto (architecture-adaptive)
@@ -55,7 +54,7 @@ cd Nexus-HandTrack
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-python nexus.py
+python src\nexus.py
 ```
 
 **PowerShell:**
@@ -66,10 +65,12 @@ cd Nexus-HandTrack
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python nexus.py
+python src\nexus.py
 ```
 
 If PowerShell blocks the script, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once, then try again.
+
+**See [docs/WINDOWS_INSTALLATION.md](docs/WINDOWS_INSTALLATION.md) for detailed Windows installation instructions.**
 
 At launch choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
 
@@ -121,7 +122,7 @@ pip install -r requirements.txt
 **2a. Run from source:**
 
 ```bash
-python nexus.py
+python src/nexus.py
 ```
 
 **2b. Build the Mac app and DMG:**
@@ -134,12 +135,24 @@ This creates `dist/Nexus.app` and puts `Nexus.dmg` in your Downloads folder. Opt
 
 ## Build for Windows (.exe)
 
+### Option 1: Build on Windows Computer
+
 Run on Windows. Produces `dist/Nexus/Nexus.exe` and optionally copies to `%USERPROFILE%\Downloads\Nexus.exe`.
+
+**Prerequisites:**
+- Python 3.10+ installed with "Add Python to PATH" checked
+- Internet connection (for downloading dependencies and models)
 
 **Command Prompt (from repo root):**
 
 ```bat
 scripts\build.bat
+```
+
+**PowerShell:**
+
+```powershell
+.\scripts\build.bat
 ```
 
 **Git Bash or WSL:**
@@ -148,7 +161,37 @@ scripts\build.bat
 ./scripts/build.sh .exe
 ```
 
-With no argument on Windows, `./scripts/build.sh` defaults to `.exe`.
+The build script will:
+1. Create a virtual environment (if needed)
+2. Install all dependencies
+3. Download MediaPipe models
+4. Build the executable with PyInstaller
+5. Copy the .exe to your Downloads folder
+
+### Option 2: Build on Mac Using GitHub Actions
+
+**Can't build Windows .exe on Mac?** Use GitHub Actions to build it automatically!
+
+1. **Push your code to GitHub:**
+   ```bash
+   git push origin main
+   ```
+
+2. **Go to GitHub → Actions tab**
+
+3. **Select "Build Windows Executable" workflow**
+
+4. **Click "Run workflow"** (or it runs automatically on push)
+
+5. **Wait ~5-10 minutes** for the build to complete
+
+6. **Download the artifact** - Click the workflow run → Artifacts → Download `Nexus-Windows-Executable`
+
+7. **Extract and transfer** the `.exe` file to your Windows computer
+
+The executable is standalone - no Python installation needed on Windows!
+
+**See [docs/WINDOWS_INSTALLATION.md](docs/WINDOWS_INSTALLATION.md) for detailed Windows installation instructions.**
 
 ## Project layout
 
@@ -157,13 +200,15 @@ Nexus-HandTrack/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
-├── nexus.py                 # Main application entry point
+├── src/
+│   └── nexus.py            # Main application entry point
 ├── assets/
 │   └── icon.png            # Application icon
 ├── config/
 │   └── nexus.spec          # PyInstaller configuration
 ├── docs/
-│   └── UI_COLORS.txt       # UI color reference documentation
+│   ├── UI_COLORS.txt       # UI color reference documentation
+│   └── WINDOWS_INSTALLATION.md  # Windows installation guide
 ├── scripts/
 │   ├── build.sh            # Cross-platform build script
 │   ├── build_mac_app.sh    # macOS-specific build script

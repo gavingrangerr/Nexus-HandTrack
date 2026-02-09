@@ -57,7 +57,6 @@ download_model() {
 echo "==> Downloading MediaPipe models..."
 download_model "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task" "$MODELS_DIR/hand.task"
 download_model "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" "$MODELS_DIR/face.task"
-download_model "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite" "$MODELS_DIR/object_detector.task"
 
 echo "==> Cleaning previous build..."
 rm -rf "$PROJECT_ROOT/build" "$PROJECT_ROOT/dist"

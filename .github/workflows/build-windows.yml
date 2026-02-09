@@ -1,0 +1,88 @@
+name: Build Windows Executable
+
+on:
+  push:
+    branches: [ main, master ]
+    paths:
+      - 'src/nexus.py'
+      - 'requirements.txt'
+      - 'config/nexus.spec'
+      - '.github/workflows/build-windows.yml'
+  pull_request:
+    branches: [ main, master ]
+    paths:
+      - 'src/nexus.py'
+      - 'requirements.txt'
+      - 'config/nexus.spec'
+  workflow_dispatch:
+
+jobs:
+  build-windows:
+    name: Build Windows Executable
+    runs-on: windows-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Set up Python
+      uses: actions/setup-python@v5
+      with:
+        python-version: '3.11'
+    
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r requirements.txt
+    
+    - name: Download MediaPipe models
+      run: |
+        if (-not (Test-Path "models")) { New-Item -ItemType Directory -Path "models" }
+        python -c "import urllib.request, os; urls = [('https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task', 'models/hand.task'), ('https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task', 'models/face.task')]; [urllib.request.urlretrieve(url, out) if not os.path.isfile(out) else None for url, out in urls]"
+    
+    - name: Build executable with PyInstaller
+      run: |
+        pyinstaller --noconfirm config/nexus.spec
+    
+    - name: Find executable
+      id: find_exe
+      run: |
+        $exePath = "dist\Nexus\Nexus.exe"
+        if (-not (Test-Path $exePath)) {
+          $exePath = "dist\Nexus.exe"
+        }
+        if (Test-Path $exePath) {
+          Write-Host "exe_path=$exePath" >> $env:GITHUB_OUTPUT
+          Write-Host "✅ Found executable: $exePath"
+        } else {
+          Write-Host "❌ Executable not found"
+          Get-ChildItem -Recurse -Filter "*.exe" | Select-Object FullName
+          exit 1
+        }
+    
+    - name: Upload Windows executable artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Nexus-Windows-Executable
+        path: ${{ steps.find_exe.outputs.exe_path }}
+        retention-days: 30
+    
+    - name: Upload build info
+      run: |
+        $info = @"
+        Nexus Windows Build
+        ===================
+        Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
+        Python Version: $(python --version)
+        PyInstaller Version: $(pyinstaller --version)
+        Executable: ${{ steps.find_exe.outputs.exe_path }}
+        "@
+        $info | Out-File -FilePath "build-info.txt" -Encoding utf8
+      shell: pwsh
+    
+    - name: Upload build info artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: Build-Info
+        path: build-info.txt
+        retention-days: 30

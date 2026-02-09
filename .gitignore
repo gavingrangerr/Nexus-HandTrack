@@ -13,3 +13,7 @@ dmg_stage/
 *.log
 models/*.task
 models/*.tflite
+
+# GitHub Actions
+.github/workflows/*.log
+.github/actions/**/node_modules/

@@ -67,11 +67,11 @@ if [[ "$TARGET" == ".dmg" ]]; then
         echo "ERROR: Build .dmg on macOS. Use: ./build.sh .exe on Windows."
         exit 1
     fi
-    ICON_PNG="$PROJECT_ROOT/icon.png"
-    ICON_ICNS="$PROJECT_ROOT/icon.icns"
+    ICON_PNG="$PROJECT_ROOT/assets/icon.png"
+    ICON_ICNS="$PROJECT_ROOT/assets/icon.icns"
     if [[ -f "$ICON_PNG" ]]; then
-        echo "==> Building app icon from icon.png..."
-        ICONSET="$PROJECT_ROOT/icon.iconset"
+        echo "==> Building app icon from assets/icon.png..."
+        ICONSET="$PROJECT_ROOT/assets/icon.iconset"
         rm -rf "$ICONSET" "$ICON_ICNS"
         mkdir -p "$ICONSET"
         for size in 16 32 128 256 512; do
@@ -88,7 +88,7 @@ if [[ "$TARGET" == ".dmg" ]]; then
         rm -f "$ICON_ICNS"
     fi
     echo "==> Running PyInstaller (Mac)..."
-    pyinstaller --noconfirm track.spec
+    pyinstaller --noconfirm config/nexus.spec
     APP_PATH="$PROJECT_ROOT/dist/$APP_NAME.app"
     if [[ ! -d "$APP_PATH" ]]; then
         echo "ERROR: $APP_NAME.app not found in dist/"
@@ -117,7 +117,7 @@ if [[ "$TARGET" == ".exe" ]]; then
         exit 1
     fi
     echo "==> Running PyInstaller (Windows)..."
-    pyinstaller --noconfirm track.spec
+    pyinstaller --noconfirm config/nexus.spec
     EXE_PATH="$PROJECT_ROOT/dist/$APP_NAME.exe"
     if [[ ! -f "$EXE_PATH" ]]; then
         EXE_PATH="$PROJECT_ROOT/dist/$APP_NAME/$APP_NAME.exe"

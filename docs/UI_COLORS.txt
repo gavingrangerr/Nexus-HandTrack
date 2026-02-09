@@ -1,0 +1,296 @@
+================================================================================
+                    UI COLOR REFERENCE DOCUMENTATION
+                         MPHF-T Tracking Application
+================================================================================
+
+This document lists all colors used in the UI and their specific usage locations.
+
+================================================================================
+                            MAIN COLOR CONSTANTS
+================================================================================
+
+1. CORE = (50, 205, 50) - RGB: Green
+   Usage:
+   - Loading screen title text
+   - Loading screen progress bar border
+   - Loading screen progress bar fill (with SUCCESS)
+   - Graph panel borders and separators
+   - Hand landmark connections (lines)
+   - Terminal section headers ("TERMINAL - LIVE COORDINATES", "LIVE COORDINATES")
+   - Hand/Point labels in terminal output
+   - FPS display background border
+   - FPS display text
+   - Hand gesture labels (wrist position text)
+   - Hand gesture label borders
+   - Main info panel borders
+   - Main info panel text
+   - Profile selection dialog borders
+   - Profile selection dialog title
+   - Profile selection option 3 (AUTO) text
+   - Camera permission waiting screen text
+   - Control panel borders
+   - Gesture capture panel borders
+   - Graph panel title labels (hand labels)
+   - Center position graph titles (X-AXIS POSITION, Y-AXIS POSITION)
+   - Face count label in graph panel
+   - Match detection panel borders
+   - Waiting screen separator line
+
+2. ACCENT = (200, 100, 0) - RGB: Orange
+   Usage:
+   - Hand landmark points (circles) in single hand graph
+   - Note: Also used as hand_colors[0] for multiple hands
+
+3. DARK_BG = (10, 12, 13) - RGB: Very Dark Gray/Black
+   Usage:
+   - Main background color for all screens
+   - Loading screen background
+   - Graph panel backgrounds
+   - Profile selection dialog background
+   - Camera permission waiting screen background
+   - Center position graph background
+   - All graph canvases
+
+4. PANEL_BG = (27, 30, 32) - RGB: Dark Gray
+   Usage:
+   - Loading screen progress bar background
+   - Terminal section backgrounds in graphs
+   - Profile selection dialog panel background
+   - FPS display background
+   - Hand gesture label backgrounds
+   - Main info panel backgrounds
+   - Control panel backgrounds
+   - Gesture capture panel backgrounds
+   - Graph panel "no hands" terminal section background
+   - Waiting screen terminal section background
+
+5. GRID = (45, 51, 57) - RGB: Medium Dark Gray
+   Usage:
+   - Grid lines in hand/face graphs
+   - Grid lines in center position graphs
+   - Vertical separator line in center position graph (between X and Y axes)
+
+6. TEXT = (224, 229, 229) - RGB: Light Gray/White
+   Usage:
+   - Loading screen status text
+   - Terminal output text (non-hand/point labels)
+   - Hand landmark point labels (numbers)
+   - Profile selection dialog instructions
+   - Profile selection dialog options 1 and 2
+   - Profile selection dialog status text
+   - Profile selection dialog feedback text
+   - Camera permission waiting screen text
+   - Graph panel "no hands" message
+   - Graph panel waiting message
+   - Main info panel text
+   - Control panel text
+   - Center position graph "Waiting for hands/face..." message
+   - Match detection text
+   - Hand landmark point labels on camera feed (duplicate of TEXT constant)
+
+7. SUCCESS = (0, 255, 127) - RGB: Green/Cyan
+   Usage:
+   - Loading screen progress bar fill
+   - Object detection bounding boxes
+   - Object detection labels background
+   - Profile selection AUTO mode feedback (when Silicon detected)
+   - Match detection panel background
+
+8. WARNING = (0, 69, 255) - RGB: Orange/Red
+   Usage:
+   - Saved gestures count label in graph panel
+   - Profile selection AUTO mode feedback (when Intel detected)
+   - Gesture capture panel background
+
+================================================================================
+                         HARDCODED COLOR VALUES
+================================================================================
+
+9. (180, 180, 180) - RGB: Light Gray
+   Usage:
+   - Hand landmark point outer circles (border)
+   - Face mesh connections (lines)
+   - Face tracking lines in center position graph
+   - Face legend indicator in center position graph
+
+10. (200, 100, 0) - RGB: Orange (same as ACCENT)
+    Usage:
+    - hand_colors[0] - First hand color in multiple hand graphs
+    - hand_point_colors[0] - First hand point color
+    - Hand tracking lines in center position graph
+    - Hand 1 legend indicator in center position graph
+
+11. (150, 200, 0) - RGB: Yellow-Green
+    Usage:
+    - hand_colors[1] - Second hand color in multiple hand graphs
+    - hand_point_colors[1] - Second hand point color
+    - Hand 2 legend indicator in center position graph
+
+12. (188, 19, 254) - RGB: Magenta/Purple
+    Usage:
+    - Hand landmark points (circles) on camera feed overlay
+
+13. (224, 229, 229) - RGB: Light Gray/White (same as TEXT)
+    Usage:
+    - Hand landmark point labels on camera feed (duplicate of TEXT constant)
+    - Match detection text
+
+14. (0, 255, 127) - RGB: Green/Cyan (same as SUCCESS)
+    Usage:
+    - object_color - Object detection color (duplicate of SUCCESS constant)
+
+15. (10, 12, 13) - RGB: Very Dark Gray/Black (same as DARK_BG)
+    Usage:
+    - Object detection label text
+    - Gesture capture panel text
+
+16. (50, 205, 50) - RGB: Green (same as CORE)
+    Usage:
+    - Face count label in graph panel (duplicate of CORE constant)
+
+17. (0, 0, 200) - RGB: Red (BGR format - OpenCV uses BGR)
+    Usage:
+    - Recording indicator circle
+    - Recording indicator text
+
+================================================================================
+                         COLOR USAGE BY COMPONENT
+================================================================================
+
+LOADING SCREEN:
+- Background: DARK_BG
+- Title: CORE
+- Status text: TEXT
+- Progress bar background: PANEL_BG
+- Progress bar border: CORE
+- Progress bar fill: SUCCESS
+- Progress dots: CORE
+
+PROFILE SELECTION DIALOG:
+- Background: DARK_BG
+- Panel background: PANEL_BG
+- Border: CORE
+- Title: CORE
+- Instructions: TEXT
+- Option 1 (FAST): TEXT
+- Option 2 (QUALITY): TEXT
+- Option 3 (AUTO): CORE
+- Status text: TEXT
+- Feedback (Silicon): SUCCESS
+- Feedback (Intel): WARNING
+
+CAMERA FEED OVERLAY:
+- Hand connections: CORE
+- Hand points: (188, 19, 254) - Magenta
+- Hand point labels: (224, 229, 229) - TEXT
+- FPS display background: PANEL_BG
+- FPS display border: CORE
+- FPS display text: CORE
+- Hand gesture labels background: PANEL_BG
+- Hand gesture labels border: CORE
+- Hand gesture labels text: CORE
+- Main info panel background: PANEL_BG
+- Main info panel border: CORE
+- Main info panel text: CORE
+- Match detection background: SUCCESS
+- Match detection border: CORE
+- Match detection text: (224, 229, 229) - TEXT
+- Control panel background: PANEL_BG
+- Control panel border: CORE
+- Control panel text: TEXT
+- Gesture capture panel background: WARNING
+- Gesture capture panel border: CORE
+- Gesture capture panel text: (10, 12, 13) - DARK_BG
+
+GRAPH PANEL:
+- Background: DARK_BG
+- Grid lines: GRID
+- Hand connections (single): CORE
+- Hand connections (multiple): hand_colors[0] or hand_colors[1]
+- Hand points (single): ACCENT
+- Hand points (multiple): hand_point_colors[0] or hand_point_colors[1]
+- Hand point borders: (180, 180, 180)
+- Hand point labels: TEXT
+- Face mesh connections: (180, 180, 180)
+- Terminal section background: PANEL_BG
+- Terminal section separator: CORE
+- Terminal section header: CORE
+- Terminal output (hand/point): CORE
+- Terminal output (other): TEXT
+- Hand labels: CORE
+- Face count label: (50, 205, 50) - CORE
+- Saved gestures count: WARNING
+- "No hands" message: TEXT
+- Waiting message: TEXT
+
+CENTER POSITION GRAPH:
+- Background: DARK_BG
+- Grid lines: GRID
+- Separator line: GRID
+- Titles (X/Y-AXIS POSITION): CORE
+- Hand 1 tracking line: (200, 100, 0) - hand_colors[0]
+- Hand 2 tracking line: (150, 200, 0) - hand_colors[1]
+- Face tracking line: (180, 180, 180)
+- Hand 1 legend: (200, 100, 0)
+- Hand 2 legend: (150, 200, 0)
+- Face legend: (180, 180, 180)
+- Waiting message: TEXT
+
+OBJECT DETECTION:
+- Bounding boxes: (0, 255, 127) - SUCCESS
+- Label background: (0, 255, 127) - SUCCESS
+- Label text: (10, 12, 13) - DARK_BG
+
+RECORDING INDICATOR:
+- Circle: (0, 0, 200) - Red (BGR)
+- Text: (0, 0, 200) - Red (BGR)
+
+CAMERA PERMISSION WAITING:
+- Background: DARK_BG
+- Text: TEXT
+- Quit instruction: CORE
+
+================================================================================
+                         COLOR SUMMARY BY RGB VALUE
+================================================================================
+
+RGB (B, G, R) - OpenCV uses BGR format:
+- (10, 12, 13)     - DARK_BG - Very dark gray/black
+- (27, 30, 32)     - PANEL_BG - Dark gray
+- (45, 51, 57)     - GRID - Medium dark gray
+- (50, 205, 50)    - CORE - Green
+- (0, 69, 255)     - WARNING - Orange/red
+- (0, 255, 127)    - SUCCESS - Green/cyan
+- (150, 200, 0)    - Hand 2 color - Yellow-green
+- (180, 180, 180)  - Light gray (face mesh, point borders)
+- (188, 19, 254)   - Magenta (hand points on camera feed)
+- (200, 100, 0)    - ACCENT/Hand 1 color - Orange
+- (224, 229, 229)  - TEXT - Light gray/white
+- (0, 0, 200)      - Red (recording indicator)
+
+================================================================================
+                              NOTES
+================================================================================
+
+1. OpenCV uses BGR (Blue, Green, Red) color format, not RGB.
+   Colors are specified as (B, G, R) tuples.
+
+2. Some colors are duplicated as constants and hardcoded values:
+   - TEXT appears as both constant and (224, 229, 229)
+   - CORE appears as both constant and (50, 205, 50)
+   - SUCCESS appears as both constant and (0, 255, 127)
+   - DARK_BG appears as both constant and (10, 12, 13)
+
+3. hand_colors and hand_point_colors arrays contain:
+   - [0]: (200, 100, 0) - Orange (same as ACCENT)
+   - [1]: (150, 200, 0) - Yellow-green
+
+4. The color scheme follows a dark theme with:
+   - Dark backgrounds (DARK_BG, PANEL_BG)
+   - Green accents (CORE, SUCCESS)
+   - Orange/yellow highlights (ACCENT, WARNING, hand colors)
+   - Light text (TEXT)
+
+================================================================================
+                              END OF DOCUMENT
+================================================================================

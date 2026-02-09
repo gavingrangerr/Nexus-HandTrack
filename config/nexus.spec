@@ -5,8 +5,19 @@ from PyInstaller.utils.hooks import collect_all
 
 block_cipher = None
 
-models_dir = os.path.join(SPECPATH, 'models')
-datas = [(models_dir, 'models')] if os.path.isdir(models_dir) else []
+project_root = os.path.dirname(SPECPATH)
+models_dir = os.path.join(project_root, 'models')
+assets_dir = os.path.join(project_root, 'assets')
+
+# Include models directory
+datas = []
+if os.path.isdir(models_dir):
+    datas.append((models_dir, 'models'))
+
+# Include assets if needed
+if os.path.isdir(assets_dir):
+    datas.append((assets_dir, 'assets'))
+
 binaries = []
 
 try:
@@ -18,8 +29,8 @@ except Exception:
     mp_hiddenimports = []
 
 a = Analysis(
-    ['track.py'],
-    pathex=[SPECPATH],
+    [os.path.join(os.path.dirname(SPECPATH), 'src', 'nexus.py')],
+    pathex=[os.path.dirname(SPECPATH)],
     binaries=binaries,
     datas=datas,
     hiddenimports=[
@@ -81,7 +92,7 @@ coll = COLLECT(
 )
 
 if sys.platform == 'darwin':
-    _icon_path = os.path.join(SPECPATH, 'icon.icns')
+    _icon_path = os.path.join(project_root, 'assets', 'icon.icns')
     app = BUNDLE(
         coll,
         name='Nexus.app',

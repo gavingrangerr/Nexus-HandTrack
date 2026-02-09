@@ -1,4 +1,3 @@
-import csv
 import cv2
 import numpy as np
 import sys
@@ -20,14 +19,6 @@ MODEL_PATH = os.path.join(DIR_MODELS, "hand.task")
 MODEL_URL = "https://storage.googleapis.com/mediapipe-models/hand_landmarker/hand_landmarker/float16/1/hand_landmarker.task"
 FACE_MODEL_PATH = os.path.join(DIR_MODELS, "face.task")
 FACE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task"
-OBJECT_MODEL_PATH = os.path.join(DIR_MODELS, "object_detector.task")
-OBJECT_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite"
-POSE_MODEL_PATH = os.path.join(DIR_MODELS, "pose_landmarker.task")
-POSE_MODEL_URL = "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task"
-
-UPPER_BODY_CONNECTIONS = [(11, 13), (13, 15), (12, 14), (14, 16)]
-UPPER_BODY_LANDMARKS = (11, 12, 13, 14, 15, 16)
-ARM_JOINT_LABELS = {11: "R shoulder", 12: "L shoulder", 13: "R elbow", 14: "L elbow", 15: "R wrist", 16: "L wrist"}
 
 INFERENCE_WIDTH = 640
 INFERENCE_HEIGHT = 360
@@ -156,37 +147,6 @@ def download_face_model():
             print(f"   URL: {FACE_MODEL_URL}")
             sys.exit(1)
     return FACE_MODEL_PATH
-
-def download_object_model():
-    os.makedirs(DIR_MODELS, exist_ok=True)
-    if not os.path.exists(OBJECT_MODEL_PATH):
-        print(">> SYNCING ASSET: OBJ_DETECTOR_PRO...")
-        import urllib.request
-        try:
-            urllib.request.urlretrieve(OBJECT_MODEL_URL, OBJECT_MODEL_PATH)
-            print("   [ OK ] ASSET_INTEGRITY_VERIFIED")
-        except Exception as e:
-            print(f"!! CRITICAL: ASSET_SYNC_FAILURE: {e}")
-            print(">> MANUAL_FETCH_REQUIRED:")
-            print(f"   URL: {OBJECT_MODEL_URL}")
-            sys.exit(1)
-    return OBJECT_MODEL_PATH
-
-
-def download_pose_model():
-    os.makedirs(DIR_MODELS, exist_ok=True)
-    if not os.path.exists(POSE_MODEL_PATH):
-        print(">> SYNCING ASSET: POSE_LANDMARKER_LITE...")
-        import urllib.request
-        try:
-            urllib.request.urlretrieve(POSE_MODEL_URL, POSE_MODEL_PATH)
-            print("   [ OK ] ASSET_INTEGRITY_VERIFIED")
-        except Exception as e:
-            print(f"!! CRITICAL: ASSET_SYNC_FAILURE: {e}")
-            print(">> MANUAL_FETCH_REQUIRED:")
-            print(f"   URL: {POSE_MODEL_URL}")
-            sys.exit(1)
-    return POSE_MODEL_PATH
 
 
 def find_macbook_camera():
@@ -482,7 +442,7 @@ def draw_multiple_hands_graph(all_hand_landmarks, graph_width=400, graph_height=
     
     return graph
 
-def draw_hands_and_face_graph(all_hand_landmarks, all_face_landmarks, graph_width=400, graph_height=400, terminal_lines=None, terminal_height=None, fast_draw=False, pose_landmarks=None):
+def draw_hands_and_face_graph(all_hand_landmarks, all_face_landmarks, graph_width=400, graph_height=400, terminal_lines=None, terminal_height=None, fast_draw=False):
     graph = np.full((graph_height, graph_width, 3), DARK_BG, dtype=np.uint8)
     if terminal_height is None:
         terminal_height = 200 if terminal_lines else 0
@@ -501,11 +461,6 @@ def draw_hands_and_face_graph(all_hand_landmarks, all_face_landmarks, graph_widt
                 if idx < len(face_landmarks) and face_landmarks[idx].x is not None and face_landmarks[idx].y is not None:
                     all_xs.append(face_landmarks[idx].x)
                     all_ys.append(face_landmarks[idx].y)
-    if pose_landmarks:
-        for px, py in pose_landmarks:
-            if px is not None and py is not None:
-                all_xs.append(px)
-                all_ys.append(py)
 
     if not all_xs or not all_ys:
         if terminal_lines:
@@ -596,27 +551,6 @@ def draw_hands_and_face_graph(all_hand_landmarks, all_face_landmarks, graph_widt
                     if 0 <= label_x < graph_width and 0 <= label_y < plot_height:
                         add_glow_effect(graph, label_x, label_y, str(idx), FONT_FACE, FONT_SMALL, TEXT, 1, 2)
 
-    if pose_landmarks and len(pose_landmarks) >= 6:
-        arm_color = (0, 165, 255)
-        pose_conns = [(0, 2), (2, 4), (1, 3), (3, 5)]
-        for i, j in pose_conns:
-            if i < len(pose_landmarks) and j < len(pose_landmarks):
-                pa, pb = pose_landmarks[i], pose_landmarks[j]
-                if pa[0] is not None and pa[1] is not None and pb[0] is not None and pb[1] is not None:
-                    x1 = int(pa[0] * scale + offset_x)
-                    y1 = int(pa[1] * scale + offset_y)
-                    x2 = int(pb[0] * scale + offset_x)
-                    y2 = int(pb[1] * scale + offset_y)
-                    if 0 <= x1 < graph_width and 0 <= y1 < plot_height and 0 <= x2 < graph_width and 0 <= y2 < plot_height:
-                        cv2.line(graph, (x1, y1), (x2, y2), arm_color, 2)
-        for pt in pose_landmarks:
-            if pt[0] is not None and pt[1] is not None:
-                px = int(pt[0] * scale + offset_x)
-                py = int(pt[1] * scale + offset_y)
-                if 0 <= px < graph_width and 0 <= py < plot_height:
-                    cv2.circle(graph, (px, py), 6, arm_color, -1)
-                    cv2.circle(graph, (px, py), 8, (180, 180, 180), 1)
-
     if terminal_lines:
         terminal_y = plot_height + 5
         cv2.rectangle(graph, (0, plot_height), (graph_width, graph_height), PANEL_BG, -1)
@@ -689,120 +623,73 @@ def draw_faces_on_image(image, face_result, draw_mesh=True):
                 cv2.line(image, (x1, y1), (x2, y2), CORE, 1)
     return image
 
-def draw_objects_on_image(image, object_result, filter_cans=True):
-    if not object_result or not object_result.detections:
-        return image
-    h, w = image.shape[:2]
-    object_color = (0, 255, 127)
-    
-    for detection in object_result.detections:
-        category = detection.categories[0] if detection.categories else None
-        if not category:
-            continue
-        
-        category_name = category.category_name.lower()
-        score = category.score
-        
-        if filter_cans:
-            can_keywords = ['can', 'bottle', 'cup', 'mug', 'container']
-            if not any(keyword in category_name for keyword in can_keywords):
-                continue
-        
-        bbox = detection.bounding_box
-        x1 = int(bbox.origin_x)
-        y1 = int(bbox.origin_y)
-        x2 = int(bbox.origin_x + bbox.width)
-        y2 = int(bbox.origin_y + bbox.height)
-        
-        x1, y1 = max(0, x1), max(0, y1)
-        x2, y2 = min(w, x2), min(h, y2)
-        
-        cv2.rectangle(image, (x1, y1), (x2, y2), object_color, 2)
-        label = f"{category_name} {score:.2f}"
-        (label_w, label_h), baseline = cv2.getTextSize(label, FONT_FACE, FONT_SMALL, 1)
-        label_y = max(y1 - int(5 * PADDING_SCALE), label_h + int(5 * PADDING_SCALE))
-        cv2.rectangle(image, (x1, label_y - label_h - int(3 * PADDING_SCALE)), (x1 + label_w + int(4 * PADDING_SCALE), label_y + int(3 * PADDING_SCALE)), object_color, -1)
-        cv2.putText(image, label, (x1 + int(2 * PADDING_SCALE), label_y), FONT_FACE, FONT_SMALL, (10, 12, 13), 1)
-    
-    return image
+# Object categories to detect (COCO dataset categories)
+OBJECT_CATEGORIES = {
+    'person': (0, 255, 127),      # Green
+    'dog': (255, 165, 0),          # Orange
+    'cat': (255, 20, 147),         # Deep Pink
+    'cell phone': (0, 191, 255),   # Deep Sky Blue
+    'phone': (0, 191, 255),        # Deep Sky Blue
+    'laptop': (138, 43, 226),      # Blue Violet
+    'mouse': (255, 140, 0),        # Dark Orange
+    'keyboard': (255, 215, 0),     # Gold
+    'book': (139, 69, 19),         # Saddle Brown
+    'cup': (0, 255, 127),          # Spring Green
+    'bottle': (0, 255, 127),       # Spring Green
+    'chair': (128, 128, 128),       # Gray
+    'couch': (128, 128, 128),       # Gray
+    'tv': (75, 0, 130),            # Indigo
+    'remote': (255, 0, 255),       # Magenta
+    'backpack': (0, 0, 255),       # Blue
+    'umbrella': (0, 0, 255),       # Blue
+    'handbag': (255, 0, 0),        # Red
+    'suitcase': (255, 0, 0),       # Red
+    'sports ball': (0, 255, 0),    # Lime
+    'frisbee': (0, 255, 0),         # Lime
+    'skis': (255, 255, 0),          # Yellow
+    'snowboard': (255, 255, 0),     # Yellow
+    'kite': (0, 255, 255),          # Cyan
+    'baseball bat': (128, 0, 128),  # Purple
+    'baseball glove': (128, 0, 128), # Purple
+    'skateboard': (255, 192, 203),  # Pink
+    'surfboard': (0, 128, 255),     # Azure
+    'tennis racket': (50, 205, 50), # Lime Green
+    'wine glass': (255, 20, 147),   # Deep Pink
+    'fork': (192, 192, 192),        # Silver
+    'knife': (192, 192, 192),       # Silver
+    'spoon': (192, 192, 192),       # Silver
+    'bowl': (139, 69, 19),          # Saddle Brown
+    'banana': (255, 255, 0),        # Yellow
+    'apple': (255, 0, 0),           # Red
+    'sandwich': (255, 165, 0),      # Orange
+    'orange': (255, 165, 0),        # Orange
+    'broccoli': (0, 255, 0),        # Green
+    'carrot': (255, 140, 0),        # Dark Orange
+    'pizza': (255, 69, 0),          # Red Orange
+    'donut': (139, 0, 139),         # Dark Magenta
+    'cake': (255, 20, 147),         # Deep Pink
+    'car': (0, 0, 255),             # Blue
+    'truck': (0, 0, 255),            # Blue
+    'bus': (255, 0, 0),              # Red
+    'motorcycle': (255, 140, 0),     # Dark Orange
+    'bicycle': (0, 255, 0),          # Green
+    'airplane': (135, 206, 250),     # Light Sky Blue
+    'train': (0, 0, 139),            # Dark Blue
+    'boat': (0, 0, 255),             # Blue
+}
 
-
-def get_pose_landmarks_for_graph(pose_result):
-    if not pose_result or not getattr(pose_result, "pose_landmarks", None) or not pose_result.pose_landmarks:
-        return None
-    landmarks_list = pose_result.pose_landmarks
-    if not landmarks_list or len(landmarks_list[0]) < 17:
-        return None
-    landmarks = landmarks_list[0]
-    out = []
-    for idx in UPPER_BODY_LANDMARKS:
-        if idx >= len(landmarks):
-            out.append((None, None))
-            continue
-        lm = landmarks[idx]
-        x, y = getattr(lm, "x", None), getattr(lm, "y", None)
-        out.append((x, y) if (x is not None and y is not None) else (None, None))
-    return out
-
-
-def get_arm_joint_coords(pose_result, frame_w, frame_h):
-    if not pose_result or not getattr(pose_result, "pose_landmarks", None) or not pose_result.pose_landmarks:
-        return None
-    landmarks_list = pose_result.pose_landmarks
-    if not landmarks_list or len(landmarks_list[0]) < 17:
-        return None
-    landmarks = landmarks_list[0]
-    out = []
-    for idx in UPPER_BODY_LANDMARKS:
-        if idx >= len(landmarks):
-            continue
-        lm = landmarks[idx]
-        if getattr(lm, "x", None) is None or getattr(lm, "y", None) is None:
-            continue
-        cx, cy = int(lm.x * frame_w), int(lm.y * frame_h)
-        name = ARM_JOINT_LABELS.get(idx, "")
-        if name:
-            out.append((name, cx, cy))
-    return out if out else None
-
-
-def draw_pose_upper_body(image, pose_result):
-    if not pose_result or not getattr(pose_result, "pose_landmarks", None) or not pose_result.pose_landmarks:
-        return image
-    h, w = image.shape[:2]
-    for landmarks in pose_result.pose_landmarks:
-        if len(landmarks) < 17:
-            continue
-        for i, j in UPPER_BODY_CONNECTIONS:
-            if i >= len(landmarks) or j >= len(landmarks):
-                continue
-            pa, pb = landmarks[i], landmarks[j]
-            if getattr(pa, "x", None) is None or getattr(pa, "y", None) is None:
-                continue
-            if getattr(pb, "x", None) is None or getattr(pb, "y", None) is None:
-                continue
-            x1, y1 = int(pa.x * w), int(pa.y * h)
-            x2, y2 = int(pb.x * w), int(pb.y * h)
-            cv2.line(image, (x1, y1), (x2, y2), ACCENT, 2)
-        for idx in UPPER_BODY_LANDMARKS:
-            if idx >= len(landmarks):
-                continue
-            lm = landmarks[idx]
-            if getattr(lm, "x", None) is None or getattr(lm, "y", None) is None:
-                continue
-            cx, cy = int(lm.x * w), int(lm.y * h)
-            cv2.circle(image, (cx, cy), 8, ACCENT, -1)
-            cv2.circle(image, (cx, cy), 10, (224, 229, 229), 2)
-            label = ARM_JOINT_LABELS.get(idx, "")
-            if label:
-                font_scale = 0.75
-                thickness = 2
-                (lw, lh), _ = cv2.getTextSize(label, FONT_FACE, font_scale, thickness)
-                tx, ty = cx + 12, cy + lh // 2
-                cv2.rectangle(image, (tx - 3, ty - lh - 3), (tx + lw + 3, ty + 3), PANEL_BG, -1)
-                cv2.putText(image, label, (tx, ty), FONT_FACE, font_scale, TEXT, thickness)
-    return image
-
+def get_object_color(category_name):
+    """Get color for object category"""
+    category_lower = category_name.lower()
+    # Check exact match first
+    if category_lower in OBJECT_CATEGORIES:
+        return OBJECT_CATEGORIES[category_lower]
+    # Check partial matches
+    for cat, color in OBJECT_CATEGORIES.items():
+        if cat in category_lower or category_lower in cat:
+            return color
+    # Default color
+    return WARNING
 
 def draw_center_position_graph(graph_canvas, hand_centers_history, face_centers_history, max_history=200):
     graph_h, graph_w = graph_canvas.shape[:2]
@@ -989,7 +876,7 @@ def gesture_matches(current_landmarks, saved_landmarks_data, threshold=0.08):
 
 def show_startup_menu():
     print("\n[ 03 ] KINEMATIC ENGINE LOADED")
-    print("   HAND + FACE + OBJECT TRACKER")
+    print("   HAND + FACE TRACKER")
     print("\n[ USER_INPUT_REQUIRED // SELECT TRACKING_PROFILE ]")
     print("  [01] FAST_PATH    - FPS_OPTIMIZED (STAGGERED_DETECTION)")
     print("  [02] QUALITY_PATH - VISUAL_MAX (CONCURRENT_LANDMARKS)")
@@ -1019,6 +906,7 @@ def open_camera_with_retry(camera_index, backend, max_attempts=30, wait_sec=1.0,
     keys_per_sec = max(1, int(1000 // wait_per_key_ms))
     for attempt in range(max_attempts):
         cap = cv2.VideoCapture(camera_index, backend)
+        
         if cap.isOpened():
             ret, frame = cap.read()
             if ret and frame is not None:
@@ -1055,40 +943,90 @@ def open_camera_with_retry(camera_index, backend, max_attempts=30, wait_sec=1.0,
     return None, None, False
 
 
-def show_profile_dialog():
-    w, h = 640, 380
-    win_name = "Nexus — Select Profile"
-    cv2.namedWindow(win_name, cv2.WINDOW_NORMAL)
-    cv2.resizeWindow(win_name, w, h)
-
+def show_profile_dialog(window_name, screen_width, screen_height):
+    """Show profile selection in the main window
+    Returns: fast_mode (bool)
+    """
+    # Calculate scales once (used in both main screen and feedback)
+    border_thickness = 3
+    title_scale = min(1.2 * (screen_width / 1280), 1.5)
+    inst_scale = min(0.6 * (screen_width / 1280), 0.8)
+    option_scale = min(0.9 * (screen_width / 1280), 1.2)
+    status_scale = min(0.5 * (screen_width / 1280), 0.7)
+    
     while True:
-        screen = np.full((h, w, 3), DARK_BG, dtype=np.uint8)
-        cv2.rectangle(screen, (0, 0), (w, h), PANEL_BG, -1)
-        cv2.rectangle(screen, (20, 20), (w - 20, h - 20), CORE, 2)
+        screen = np.full((screen_height, screen_width, 3), DARK_BG, dtype=np.uint8)
+        cv2.rectangle(screen, (0, 0), (screen_width, screen_height), PANEL_BG, -1)
+        
+        # Border
+        cv2.rectangle(screen, (border_thickness, border_thickness), 
+                     (screen_width - border_thickness, screen_height - border_thickness), CORE, border_thickness)
 
+        # Title
         title = "SELECT TRACKING PROFILE"
-        (tw, th), _ = cv2.getTextSize(title, FONT_FACE, 0.7, 2)
-        cv2.putText(screen, title, ((w - tw) // 2, 70), FONT_FACE, 0.7, CORE, 2)
-        cv2.putText(screen, "Press 1, 2, or 3 on your keyboard", ((w - 320) // 2, 110), FONT_FACE, 0.45, TEXT, 1)
+        (tw, th), _ = cv2.getTextSize(title, FONT_FACE, title_scale, 3)
+        cv2.putText(screen, title, ((screen_width - tw) // 2, int(screen_height * 0.12)), 
+                   FONT_FACE, title_scale, CORE, 3)
+        
+        # Instructions
+        inst_text = "Press 1, 2, or 3 on your keyboard"
+        (iw, ih), _ = cv2.getTextSize(inst_text, FONT_FACE, inst_scale, 2)
+        cv2.putText(screen, inst_text, ((screen_width - iw) // 2, int(screen_height * 0.25)), 
+                   FONT_FACE, inst_scale, TEXT, 2)
 
-        y0 = 150
-        line_h = 42
-        cv2.putText(screen, "[ 1 ]  FAST    — FPS optimized (staggered detection)", (50, y0), FONT_FACE, 0.45, TEXT, 1)
-        cv2.putText(screen, "[ 2 ]  QUALITY — Visual max (concurrent landmarks)", (50, y0 + line_h), FONT_FACE, 0.45, TEXT, 1)
-        cv2.putText(screen, "[ 3 ]  AUTO    — Architecture adaptive (recommended)", (50, y0 + 2 * line_h), FONT_FACE, 0.45, CORE, 1)
+        # Options
+        y0 = int(screen_height * 0.35)
+        line_h = int(screen_height * 0.12)
+        
+        option1 = "[ 1 ]  FAST    — FPS optimized (staggered detection)"
+        option2 = "[ 2 ]  QUALITY — Visual max (concurrent landmarks)"
+        option3 = "[ 3 ]  AUTO    — Architecture adaptive (recommended)"
+        
+        cv2.putText(screen, option1, (int(screen_width * 0.1), y0), 
+                   FONT_FACE, option_scale, TEXT, 2)
+        cv2.putText(screen, option2, (int(screen_width * 0.1), y0 + line_h), 
+                   FONT_FACE, option_scale, TEXT, 2)
+        cv2.putText(screen, option3, (int(screen_width * 0.1), y0 + 2 * line_h), 
+                   FONT_FACE, option_scale, CORE, 2)
 
-        cv2.putText(screen, "Waiting for key...", (50, h - 40), FONT_FACE, 0.4, TEXT, 1)
-        cv2.imshow(win_name, screen)
-        key = cv2.waitKey(100)
+        # Status
+        status_text = "Waiting for key..."
+        (sw, sh), _ = cv2.getTextSize(status_text, FONT_FACE, status_scale, 1)
+        cv2.putText(screen, status_text, ((screen_width - sw) // 2, int(screen_height * 0.85)), 
+                   FONT_FACE, status_scale, TEXT, 1)
+        
+        cv2.imshow(window_name, screen)
+        key = cv2.waitKey(100) & 0xFF
         if key == ord('1'):
-            cv2.destroyWindow(win_name)
             return True
         if key == ord('2'):
-            cv2.destroyWindow(win_name)
             return False
         if key == ord('3'):
-            cv2.destroyWindow(win_name)
-            return _is_apple_silicon()
+            fast_mode = _is_apple_silicon()
+            # Show feedback message
+            feedback_screen = np.full((screen_height, screen_width, 3), DARK_BG, dtype=np.uint8)
+            cv2.rectangle(feedback_screen, (0, 0), (screen_width, screen_height), PANEL_BG, -1)
+            cv2.rectangle(feedback_screen, (border_thickness, border_thickness), 
+                         (screen_width - border_thickness, screen_height - border_thickness), CORE, border_thickness)
+            
+            if fast_mode:
+                feedback_text = "SILICON_DETECTED: ENFORCING FAST_PATH"
+                feedback_color = SUCCESS
+            else:
+                feedback_text = "INTEL_DETECTED: ENFORCING QUALITY_PATH"
+                feedback_color = WARNING
+            
+            (fw, fh), _ = cv2.getTextSize(feedback_text, FONT_FACE, title_scale, 3)
+            cv2.putText(feedback_screen, feedback_text, ((screen_width - fw) // 2, screen_height // 2), 
+                       FONT_FACE, title_scale, feedback_color, 3)
+            
+            start_text = "Starting application..."
+            (st_w, st_h), _ = cv2.getTextSize(start_text, FONT_FACE, inst_scale, 2)
+            cv2.putText(feedback_screen, start_text, ((screen_width - st_w) // 2, screen_height // 2 + int(fh * 1.5)), 
+                       FONT_FACE, inst_scale, TEXT, 2)
+            cv2.imshow(window_name, feedback_screen)
+            cv2.waitKey(1000)
+            return fast_mode
 
 def main():
     session_id = hex(int(time.time()))[2:]
@@ -1103,10 +1041,19 @@ def main():
     print("="*80)
     print()
     
-    if getattr(sys, 'frozen', False):
-        fast_mode = show_profile_dialog()
-    else:
-        fast_mode = show_startup_menu()
+    # Create main window first
+    REF_W, REF_H = 1280, 720
+    window_name = 'Nexus - MacBook Camera'
+    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
+    cv2.setWindowProperty(window_name, cv2.WND_PROP_ASPECT_RATIO, cv2.WINDOW_FREERATIO)
+    cv2.resizeWindow(window_name, REF_W, REF_H)
+    time.sleep(0.08)
+    rect = cv2.getWindowImageRect(window_name)
+    screen_width = rect[2] if rect[2] > 0 else REF_W
+    screen_height = rect[3] if rect[3] > 0 else REF_H
+    
+    # Show profile selection in main window
+    fast_mode = show_profile_dialog(window_name, screen_width, screen_height)
 
     from mediapipe.tasks import python
     from mediapipe.tasks.python import vision
@@ -1136,10 +1083,8 @@ def main():
         print("\n[ 01 ] INITIALIZING CORE ASSETS...")
     model_path = download_model()
     face_model_path = download_face_model()
-    object_model_path = download_object_model()
-    pose_model_path = download_pose_model()
 
-    detector, face_landmarker, object_detector, pose_landmarker = None, None, None, None
+    detector, face_landmarker = None, None
     def load_hand():
         nonlocal detector
         opts = vision.HandLandmarkerOptions(
@@ -1162,39 +1107,13 @@ def main():
             output_facial_transformation_matrixes=False,
         )
         face_landmarker = vision.FaceLandmarker.create_from_options(opts)
-    def load_object():
-        nonlocal object_detector
-        opts = vision.ObjectDetectorOptions(
-            base_options=python.BaseOptions(model_asset_path=object_model_path),
-            running_mode=vision.RunningMode.VIDEO,
-            max_results=3 if fast_mode else 5,
-            score_threshold=0.5,
-        )
-        object_detector = vision.ObjectDetector.create_from_options(opts)
-    def load_pose():
-        nonlocal pose_landmarker
-        opts = vision.PoseLandmarkerOptions(
-            base_options=python.BaseOptions(model_asset_path=pose_model_path),
-            running_mode=vision.RunningMode.VIDEO,
-            num_poses=1,
-            min_pose_detection_confidence=0.4,
-            min_pose_presence_confidence=0.4,
-            min_tracking_confidence=0.4,
-        )
-        pose_landmarker = vision.PoseLandmarker.create_from_options(opts)
 
     t1 = threading.Thread(target=load_hand)
     t2 = threading.Thread(target=load_face)
-    t3 = threading.Thread(target=load_object)
-    t4 = threading.Thread(target=load_pose)
     t1.start()
     t2.start()
-    t3.start()
-    t4.start()
     t1.join()
     t2.join()
-    t3.join()
-    t4.join()
     
     camera_index, backend = find_macbook_camera()
     
@@ -1239,52 +1158,22 @@ def main():
         else:
             print(">> CLOCK_SYNC: DEFAULT_30FPS")
     
-    REF_W, REF_H = 1280, 720
-    window_name = 'Nexus - MacBook Camera'
-    cv2.namedWindow(window_name, cv2.WINDOW_NORMAL)
-    cv2.setWindowProperty(window_name, cv2.WND_PROP_ASPECT_RATIO, cv2.WINDOW_FREERATIO)
-    cv2.resizeWindow(window_name, REF_W, REF_H)
-    time.sleep(0.08)
+    # Window already created above for profile selection
+    # Update window size in case user resized it
     rect = cv2.getWindowImageRect(window_name)
-    screen_width = rect[2] if rect[2] > 0 else REF_W
-    screen_height = rect[3] if rect[3] > 0 else REF_H
+    screen_width = rect[2] if rect[2] > 0 else screen_width
+    screen_height = rect[3] if rect[3] > 0 else screen_height
     
-    loading_start_time = time.time()
-    loading_stages = [
-        ("SENSOR_INIT", 0.2),
-        ("FRAME_BUFFER", 0.5),
-        ("TRACKING_ENGINE", 0.8),
-        ("READY", 1.0)
-    ]
-    current_stage_idx = 0
-    
-    loading_duration = 0.2
-    while True:
-        elapsed = time.time() - loading_start_time
-        if elapsed > loading_duration:
-            break
-        progress = min(elapsed / loading_duration, 1.0)
-        
-        for i, (stage_name, stage_progress) in enumerate(loading_stages):
-            if progress >= stage_progress:
-                current_stage_idx = i
-        
-        if current_stage_idx < len(loading_stages):
-            status_text = loading_stages[current_stage_idx][0]
-            stage_progress = loading_stages[current_stage_idx][1]
-            if current_stage_idx > 0:
-                prev_progress = loading_stages[current_stage_idx - 1][1]
-                local_progress = (progress - prev_progress) / (stage_progress - prev_progress)
-                display_progress = prev_progress + local_progress * (stage_progress - prev_progress)
-            else:
-                display_progress = progress / stage_progress * stage_progress
-        else:
-            status_text = "READY"
-            display_progress = 1.0
-        
-        loading_screen = create_loading_screen(screen_width, screen_height, display_progress, status_text)
-        cv2.imshow(window_name, loading_screen)
-        cv2.waitKey(1)
+    # Skip loading screen for faster startup (like optimized mode)
+    # Just show a brief ready message
+    ready_screen = np.full((screen_height, screen_width, 3), DARK_BG, dtype=np.uint8)
+    cv2.rectangle(ready_screen, (0, 0), (screen_width, screen_height), PANEL_BG, -1)
+    ready_text = "READY"
+    (rw, rh), _ = cv2.getTextSize(ready_text, FONT_FACE, FONT_LARGE * 1.2, 2)
+    cv2.putText(ready_screen, ready_text, ((screen_width - rw) // 2, screen_height // 2), 
+               FONT_FACE, FONT_LARGE * 1.2, CORE, 2)
+    cv2.imshow(window_name, ready_screen)
+    cv2.waitKey(50)  # Brief display
     
     saved_gestures = {}
     capturing_gesture = False
@@ -1292,11 +1181,7 @@ def main():
     recording_graph = False
     video_writer = None
     recording_filename = None
-    log_tracking = False
-    csv_log_file = None
-    csv_log_writer = None
-    csv_log_path = None
-
+    
     os.makedirs(DIR_OUT, exist_ok=True)
     if not getattr(sys, 'frozen', False):
         print("\n[ 05 ] LIVE TELEMETRY STREAM")
@@ -1307,11 +1192,7 @@ def main():
     frame_time = 1.0 / target_fps
     frame_index = 0
     last_face_result = None
-    last_object_result = None
-    last_pose_result = None
     last_graph_panel = None
-    object_stagger = 7 if fast_mode else 3
-    pose_stagger = 2 if fast_mode else 1
     
     hand_centers_history = []
     face_centers_history = []
@@ -1328,6 +1209,7 @@ def main():
             frame = cv2.flip(frame, 1)
             
             rgb_frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)
+            frame_h, frame_w = rgb_frame.shape[:2]  # Get full frame dimensions
             inference_frame = cv2.resize(rgb_frame, (inference_w, inference_h), interpolation=interp_inference)
             inference_frame = np.ascontiguousarray(inference_frame)
             mp_image = Image(image_format=ImageFormat.SRGB, data=inference_frame)
@@ -1342,17 +1224,6 @@ def main():
             else:
                 face_result = last_face_result
             
-            if frame_index % object_stagger == 1 or last_object_result is None:
-                object_result = object_detector.detect_for_video(mp_image, timestamp_ms)
-                last_object_result = object_result
-            else:
-                object_result = last_object_result
-            if pose_stagger == 1 or frame_index % pose_stagger == 1 or last_pose_result is None:
-                pose_result = pose_landmarker.detect_for_video(mp_image, timestamp_ms)
-                last_pose_result = pose_result
-            else:
-                pose_result = last_pose_result
-
             fps_frame_count += 1
             elapsed_time = time.time() - fps_start_time
             if elapsed_time >= 1.0:
@@ -1366,16 +1237,8 @@ def main():
                 time.sleep(sleep_time)
             draw_landmarks_on_image(rgb_frame, detection_result, fps_current)
             draw_faces_on_image(rgb_frame, face_result, draw_mesh=not fast_mode)
-            draw_pose_upper_body(rgb_frame, pose_result)
-            draw_objects_on_image(rgb_frame, object_result, filter_cans=True)
             frame = cv2.cvtColor(rgb_frame, cv2.COLOR_RGB2BGR)
             frame_h, frame_w = frame.shape[:2]
-
-            hand_centers_log = []
-            for hand_landmarks in (detection_result.hand_landmarks or []):
-                xs = [lm.x * frame_w for lm in hand_landmarks]
-                ys = [lm.y * frame_h for lm in hand_landmarks]
-                hand_centers_log.append((sum(xs) / len(xs), sum(ys) / len(ys)))
 
             rect = cv2.getWindowImageRect(window_name)
             win_w = max(320, rect[2] if rect[2] > 0 else screen_width)
@@ -1394,9 +1257,8 @@ def main():
             camera_height = int(win_h * 0.75)
             graph_height = camera_height
             
-            num_hands = len(detection_result.hand_landmarks)
+            num_hands = len(detection_result.hand_landmarks) if detection_result and detection_result.hand_landmarks else 0
             num_faces = len(face_result.face_landmarks) if face_result and face_result.face_landmarks else 0
-            num_objects = len(object_result.detections) if object_result and object_result.detections else 0
             total_fingers = 0
             gestures = []
             
@@ -1417,38 +1279,9 @@ def main():
             face_centers_history.append(current_face_center)
             if len(face_centers_history) > max_history_frames:
                 face_centers_history.pop(0)
+            
 
-            arm_joint_coords = get_arm_joint_coords(pose_result, frame_w, frame_h)
-            if arm_joint_coords is None:
-                arm_joint_coords = []
-
-            if log_tracking and csv_log_writer is not None:
-                arm_name_to_col = {"R shoulder": "left_shoulder", "L shoulder": "right_shoulder", "R elbow": "left_elbow", "L elbow": "right_elbow", "R wrist": "left_wrist", "L wrist": "right_wrist"}
-                row = {
-                    "timestamp": time.time(),
-                    "frame_index": frame_index,
-                    "hand1_x": hand_centers_log[0][0] if len(hand_centers_log) > 0 else "",
-                    "hand1_y": hand_centers_log[0][1] if len(hand_centers_log) > 0 else "",
-                    "hand2_x": hand_centers_log[1][0] if len(hand_centers_log) > 1 else "",
-                    "hand2_y": hand_centers_log[1][1] if len(hand_centers_log) > 1 else "",
-                    "left_shoulder_x": "", "left_shoulder_y": "",
-                    "left_elbow_x": "", "left_elbow_y": "",
-                    "left_wrist_x": "", "left_wrist_y": "",
-                    "right_shoulder_x": "", "right_shoulder_y": "",
-                    "right_elbow_x": "", "right_elbow_y": "",
-                    "right_wrist_x": "", "right_wrist_y": "",
-                    "face_x": "", "face_y": "",
-                }
-                if current_face_center is not None:
-                    row["face_x"], row["face_y"] = current_face_center[0], current_face_center[1]
-                for name, jx, jy in arm_joint_coords:
-                    col = arm_name_to_col.get(name)
-                    if col:
-                        row[col + "_x"], row[col + "_y"] = jx, jy
-                csv_log_writer.writerow(row)
-                csv_log_file.flush()
-
-            if num_hands > 0 or num_faces > 0 or num_objects > 0:
+            if num_hands > 0 or num_faces > 0:
                 use_prev_graph = fast_mode and frame_index % graph_stagger != 1 and last_graph_panel is not None
                 if use_prev_graph:
                     graph_panel = last_graph_panel.copy()
@@ -1463,7 +1296,7 @@ def main():
                 h, w = frame.shape[:2]
                 
                 current_hand_centers = []
-                for idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
+                for idx, hand_landmarks in enumerate(detection_result.hand_landmarks if detection_result and detection_result.hand_landmarks else []):
                     finger_count, gesture = count_fingers(hand_landmarks, w, h)
                     total_fingers += finger_count
                     gestures.append(gesture)
@@ -1476,7 +1309,7 @@ def main():
                     current_hand_centers.append((center_x, center_y))
                     
                     if not use_prev_graph:
-                        display_lines.append(f"Hand {idx+1} ({handedness}): {finger_count} fingers")
+                        display_lines.append(f"Hand {idx+1} ({handedness}): {finger_count} fingers | {gesture}")
                 
                 while len(current_hand_centers) < 2:
                     current_hand_centers.append(None)
@@ -1488,23 +1321,20 @@ def main():
                 
                 if not use_prev_graph and num_faces > 0:
                     display_lines.append(f"Face: {num_faces}")
-                if not use_prev_graph and num_objects > 0:
-                    display_lines.append(f"Objects: {num_objects}")
                 if not use_prev_graph:
-                    all_hands = list(detection_result.hand_landmarks) if num_hands > 0 else []
+                    all_hands = list(detection_result.hand_landmarks) if num_hands > 0 and detection_result and detection_result.hand_landmarks else []
                     all_faces = list(face_result.face_landmarks) if (face_result and face_result.face_landmarks) else []
                     hand_graph_height = graph_height - title_area_height
-                    pose_for_graph = get_pose_landmarks_for_graph(pose_result)
-                    hand_graph = draw_hands_and_face_graph(all_hands, all_faces, graph_width, hand_graph_height, display_lines or ["—"], 100, pose_landmarks=pose_for_graph)
+                    hand_graph = draw_hands_and_face_graph(all_hands, all_faces, graph_width, hand_graph_height, display_lines or ["—"], 100)
                     graph_panel[title_area_height:, :] = hand_graph
                     label_y = title_area_height - int(5 * PADDING_SCALE)
                     if label_y >= int(30 * PADDING_SCALE):
                         line_idx = 0
-                        for idx, hand_landmarks in enumerate(detection_result.hand_landmarks):
+                        for idx, hand_landmarks in enumerate(detection_result.hand_landmarks if detection_result and detection_result.hand_landmarks else []):
                             h, w = frame.shape[:2]
                             finger_count, gesture = count_fingers(hand_landmarks, w, h)
                             handedness = get_handedness_label(detection_result, idx)
-                            hand_label = f"HAND {idx+1} ({handedness.upper()}): {finger_count} FINGERS"
+                            hand_label = f"HAND {idx+1} ({handedness.upper()}): {finger_count} FINGERS | {gesture.upper()}"
                             add_glow_effect(graph_panel, int(10 * PADDING_SCALE), label_y + line_idx * LABEL_ROW, hand_label, FONT_FACE, FONT_MED, CORE, 1, 2)
                             line_idx += 1
                         if num_faces > 0:
@@ -1513,7 +1343,7 @@ def main():
                     last_graph_panel = graph_panel.copy()
             else:
                 graph_panel = np.full((graph_height, graph_width, 3), DARK_BG, dtype=np.uint8)
-                no_hands_text = "NO HANDS, FACE, OR OBJECTS"
+                no_hands_text = "NO HANDS OR FACE"
                 (text_w, text_h), _ = cv2.getTextSize(no_hands_text, FONT_FACE, FONT_LARGE, 2)
                 add_glow_effect(graph_panel, graph_width // 2 - text_w // 2, graph_height // 2,
                                no_hands_text, FONT_FACE, FONT_LARGE, TEXT, 2, 3)
@@ -1523,8 +1353,8 @@ def main():
                 add_glow_effect(graph_panel, int(8 * PADDING_SCALE), terminal_y + int(24 * PADDING_SCALE), "WAITING FOR HANDS / FACE...",
                                FONT_FACE, FONT_MED, TEXT, 1, 2)
             
-            if num_hands > 0 or num_faces > 0 or num_objects > 0:
-                info_text = f"HANDS: {num_hands} | FINGERS: {total_fingers} | FACES: {num_faces} | OBJECTS: {num_objects}"
+            if num_hands > 0 or num_faces > 0:
+                info_text = f"HANDS: {num_hands} | FINGERS: {total_fingers} | FACES: {num_faces}"
                 if num_hands > 0 and len(set(gestures)) == 1:
                     info_text += f" | GESTURE: {gestures[0].upper()}"
                 
@@ -1538,7 +1368,7 @@ def main():
                 add_glow_effect(frame, padding + int(4 * PADDING_SCALE), padding + text_h + int(4 * PADDING_SCALE), info_text,
                                FONT_FACE, FONT_LARGE, CORE, 2, 2)
                 
-                if num_hands > 0 and detection_result.hand_landmarks and saved_gestures:
+                if num_hands > 0 and detection_result and detection_result.hand_landmarks and saved_gestures:
                     current_landmarks = detection_result.hand_landmarks[0]
                     for name, saved_landmarks_data in saved_gestures.items():
                         if gesture_matches(current_landmarks, saved_landmarks_data):
@@ -1620,30 +1450,7 @@ def main():
                     break
             except cv2.error:
                 break
-            if key == ord('l') or key == ord('L'):
-                if not log_tracking:
-                    timestamp = time.strftime("%Y%m%d_%H%M%S")
-                    csv_log_path = os.path.join(DIR_OUT, f"tracking_log_{timestamp}.csv")
-                    csv_log_file = open(csv_log_path, "w", newline="")
-                    csv_columns = ["timestamp", "frame_index", "hand1_x", "hand1_y", "hand2_x", "hand2_y",
-                                  "left_shoulder_x", "left_shoulder_y", "left_elbow_x", "left_elbow_y",
-                                  "left_wrist_x", "left_wrist_y", "right_shoulder_x", "right_shoulder_y",
-                                  "right_elbow_x", "right_elbow_y", "right_wrist_x", "right_wrist_y",
-                                  "face_x", "face_y"]
-                    csv_log_writer = csv.DictWriter(csv_log_file, fieldnames=csv_columns, extrasaction="ignore")
-                    csv_log_writer.writeheader()
-                    log_tracking = True
-                    print(f">> LOGGING_STARTED: {csv_log_path}")
-                else:
-                    if csv_log_file is not None:
-                        csv_log_file.close()
-                        csv_log_file = None
-                    csv_log_writer = None
-                    log_tracking = False
-                    if csv_log_path:
-                        print(f">> LOGGING_STOPPED: {csv_log_path}")
-                        csv_log_path = None
-            elif key == ord('r') or key == ord('R'):
+            if key == ord('r') or key == ord('R'):
                 if not recording_graph:
                     timestamp = time.strftime("%Y%m%d_%H%M%S")
                     recording_filename = os.path.join(DIR_OUT, f"graph_recording_{timestamp}.mp4")
@@ -1651,35 +1458,15 @@ def main():
                     fps = 15.0
                     video_writer = cv2.VideoWriter(recording_filename, fourcc, fps, (graph_width, camera_height))
                     recording_graph = True
-                    csv_log_path = os.path.join(DIR_OUT, f"tracking_log_{timestamp}.csv")
-                    csv_log_file = open(csv_log_path, "w", newline="")
-                    csv_columns = ["timestamp", "frame_index", "hand1_x", "hand1_y", "hand2_x", "hand2_y",
-                                  "left_shoulder_x", "left_shoulder_y", "left_elbow_x", "left_elbow_y",
-                                  "left_wrist_x", "left_wrist_y", "right_shoulder_x", "right_shoulder_y",
-                                  "right_elbow_x", "right_elbow_y", "right_wrist_x", "right_wrist_y",
-                                  "face_x", "face_y"]
-                    csv_log_writer = csv.DictWriter(csv_log_file, fieldnames=csv_columns, extrasaction="ignore")
-                    csv_log_writer.writeheader()
-                    log_tracking = True
                     print(f">> RECORDING_STARTED: {recording_filename}")
-                    print(f">> LOGGING_STARTED: {csv_log_path}")
                 else:
                     if video_writer is not None:
                         video_writer.release()
                         video_writer = None
                     recording_graph = False
-                    if csv_log_file is not None:
-                        csv_log_file.close()
-                        csv_log_file = None
-                    csv_log_writer = None
-                    log_tracking = False
-                    if recording_filename:
-                        print(f">> RECORDING_STOPPED: {recording_filename}")
-                    if csv_log_path:
-                        print(f">> LOGGING_STOPPED: {csv_log_path}")
-                        csv_log_path = None
+                    print(f">> RECORDING_STOPPED: {recording_filename}")
             elif key == ord('c'):
-                if num_hands > 0 and detection_result.hand_landmarks:
+                if num_hands > 0 and detection_result and detection_result.hand_landmarks:
                     capturing_gesture = True
                     gesture_name_input = ""
                     print(">> CAPTURE_SEQUENCE: INPUT_NAME + [S] TO COMMIT")
@@ -1708,18 +1495,8 @@ def main():
             video_writer = None
             if recording_filename:
                 print(f">> RECORDING_SAVED: {recording_filename}")
-        if log_tracking and csv_log_file is not None:
-            try:
-                csv_log_file.close()
-            except Exception:
-                pass
-            csv_log_file = None
-            csv_log_writer = None
-            log_tracking = False
+        detector.close()
         face_landmarker.close()
-        object_detector.close()
-        if pose_landmarker is not None:
-            pose_landmarker.close()
         cap.release()
         cv2.destroyAllWindows()
         print(">> SESSION_TERMINATED. SENSOR_RELEASED. EXIT...")

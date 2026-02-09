@@ -38,11 +38,11 @@ download_model "https://storage.googleapis.com/mediapipe-models/hand_landmarker/
 download_model "https://storage.googleapis.com/mediapipe-models/face_landmarker/face_landmarker/float16/1/face_landmarker.task" "$MODELS_DIR/face.task"
 download_model "https://storage.googleapis.com/mediapipe-models/object_detector/efficientdet_lite0/float16/1/efficientdet_lite0.tflite" "$MODELS_DIR/object_detector.task"
 
-ICON_PNG="$PROJECT_ROOT/icon.png"
-ICON_ICNS="$PROJECT_ROOT/icon.icns"
+ICON_PNG="$PROJECT_ROOT/assets/icon.png"
+ICON_ICNS="$PROJECT_ROOT/assets/icon.icns"
 if [[ -f "$ICON_PNG" ]]; then
-    echo "==> Building app icon from icon.png..."
-    ICONSET="$PROJECT_ROOT/icon.iconset"
+    echo "==> Building app icon from assets/icon.png..."
+    ICONSET="$PROJECT_ROOT/assets/icon.iconset"
     rm -rf "$ICONSET" "$ICON_ICNS"
     mkdir -p "$ICONSET"
     for size in 16 32 128 256 512; do
@@ -63,7 +63,7 @@ echo "==> Cleaning previous build..."
 rm -rf "$PROJECT_ROOT/build" "$PROJECT_ROOT/dist"
 
 echo "==> Running PyInstaller..."
-pyinstaller --noconfirm track.spec
+pyinstaller --noconfirm config/nexus.spec
 
 APP_PATH="$PROJECT_ROOT/dist/$APP_NAME.app"
 if [[ ! -d "$APP_PATH" ]]; then
@@ -76,15 +76,63 @@ echo "==> Creating DMG..."
 DMG_STAGE="$PROJECT_ROOT/dmg_stage"
 rm -rf "$DMG_STAGE"
 mkdir -p "$DMG_STAGE"
+
+# Copy app
 cp -R "$APP_PATH" "$DMG_STAGE/"
+
+# Create Applications symlink
 ln -s /Applications "$DMG_STAGE/Applications"
+
+# Create README
+cat > "$DMG_STAGE/README.txt" << 'EOF'
+Nexus - Advanced Tracking Division
+==================================
+
+INSTALLATION:
+1. Drag "Nexus.app" to the "Applications" folder
+2. Open Applications and double-click Nexus.app
+3. Grant camera permission when prompted
+
+FEATURES:
+- Hand landmark tracking
+- Face mesh overlay  
+- Object detection
+- Real-time graphs
+
+SYSTEM REQUIREMENTS:
+- macOS 10.15 or later
+- Camera (built-in or external)
+- No additional software needed!
+
+TROUBLESHOOTING:
+If app won't open:
+- Right-click → Open → Click "Open"
+- Or: System Settings → Privacy & Security → Allow app
+EOF
 
 DOWNLOAD_DMG="${HOME}/Downloads/${DMG_NAME}.dmg"
 rm -f "$DOWNLOAD_DMG"
-hdiutil create -volname "$APP_NAME" -srcfolder "$DMG_STAGE" -ov -format UDZO "$DOWNLOAD_DMG"
+
+# Create DMG with better formatting
+hdiutil create -volname "$APP_NAME" \
+    -srcfolder "$DMG_STAGE" \
+    -ov \
+    -format UDZO \
+    -fs HFS+ \
+    "$DOWNLOAD_DMG"
+
 rm -rf "$DMG_STAGE"
 
 echo ""
-echo "==> Done."
-echo "    App:  $APP_PATH"
-echo "    DMG:  $DOWNLOAD_DMG"
+echo "=========================================="
+echo "✅ DMG Created Successfully!"
+echo "=========================================="
+echo ""
+echo "App:  $APP_PATH"
+echo "DMG:  $DOWNLOAD_DMG"
+echo ""
+echo "The DMG is self-contained - recipients can:"
+echo "  1. Open the DMG"
+echo "  2. Drag Nexus.app to Applications"
+echo "  3. Run it immediately (no installation needed!)"
+echo ""

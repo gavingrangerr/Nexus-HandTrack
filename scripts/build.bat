@@ -35,7 +35,7 @@ if exist build rmdir /s /q build
 if exist dist rmdir /s /q dist
 
 echo ==^> Running PyInstaller (Windows)...
-pyinstaller --noconfirm track.spec
+pyinstaller --noconfirm config\nexus.spec
 
 set EXE_PATH=%PROJECT_ROOT%\dist\%APP_NAME%\%APP_NAME%.exe
 if not exist "%EXE_PATH%" set EXE_PATH=%PROJECT_ROOT%\dist\%APP_NAME%.exe

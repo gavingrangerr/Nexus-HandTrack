@@ -17,6 +17,19 @@ Real-time hand, face, and object tracking using OpenCV and MediaPipe. Runs as a 
 - Camera (built-in or external)
 - macOS or Windows for packaged builds
 
+## Quick Start
+
+```bash
+# Install dependencies
+pip install -r requirements.txt
+
+# Run the application
+python3 src/nexus.py
+
+# Or use the run script
+./run.sh
+```
+
 ## Install and run from terminal (no IDE)
 
 Install Python 3.10+ from [python.org](https://www.python.org/downloads/) if needed. Then use a terminal (Terminal.app on Mac, Command Prompt or PowerShell on Windows).
@@ -29,7 +42,7 @@ cd Nexus-HandTrack
 python3 -m venv venv
 source venv/bin/activate
 pip install -r requirements.txt
-python track.py
+python nexus.py
 ```
 
 ### Windows (Command Prompt or PowerShell)
@@ -42,7 +55,7 @@ cd Nexus-HandTrack
 python -m venv venv
 venv\Scripts\activate
 pip install -r requirements.txt
-python track.py
+python nexus.py
 ```
 
 **PowerShell:**
@@ -53,26 +66,43 @@ cd Nexus-HandTrack
 python -m venv venv
 .\venv\Scripts\Activate.ps1
 pip install -r requirements.txt
-python track.py
+python nexus.py
 ```
 
 If PowerShell blocks the script, run `Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser` once, then try again.
 
 At launch choose `1` (Fast), `2` (Quality), or `3` (Auto). Grant camera access when asked. Models download on first run.
 
-## Get the newest updates (Mac terminal)
+## Get the newest version (already set up)
 
-If you already have the repo and want the latest code from GitHub:
+If you’ve already cloned and installed everything and only want the latest Python/code:
+
+**Go into the project folder** (the folder where you ran `git clone`). For example, if you put it in Documents:
 
 ```bash
-cd Nexus-HandTrack
+cd ~/Documents/nexus
 git pull
-source venv/bin/activate
-pip install -r requirements.txt
-python track.py
 ```
 
-If you get merge conflicts, ask the repo owner or run `git status` and resolve. To discard local changes and match GitHub exactly: `git fetch origin` then `git reset --hard origin/main` (replace `main` with your default branch if different).
+If that says “No such file or directory”, the repo is somewhere else. Find it (e.g. `ls ~/Documents` or `ls ~`) then `cd` into that folder and run `git pull` there.
+
+Then run the app as usual (`source venv/bin/activate` then `python nexus.py`).
+
+### “No module named 'cv2'” or missing packages
+
+Make sure you’re in the project folder and the venv is active, then install dependencies:
+
+**Mac:**
+
+```bash
+cd ~/Documents/nexus
+source venv/bin/activate
+pip install -r requirements.txt
+```
+
+**Windows:** same idea—`cd` into the project folder, run `venv\Scripts\activate` (or `.\venv\Scripts\Activate.ps1` in PowerShell), then `pip install -r requirements.txt`.
+
+That installs OpenCV (cv2), MediaPipe, and the rest. Then run `python nexus.py` again.
 
 ## Mac: run from terminal and build the DMG
 
@@ -91,7 +121,7 @@ pip install -r requirements.txt
 **2a. Run from source:**
 
 ```bash
-python track.py
+python nexus.py
 ```
 
 **2b. Build the Mac app and DMG:**
@@ -100,7 +130,7 @@ python track.py
 ./scripts/build_mac_app.sh
 ```
 
-This creates `dist/Nexus.app` and puts `Nexus.dmg` in your Downloads folder. Optional: add `icon.png` (1024×1024) in the project root for the app icon.
+This creates `dist/Nexus.app` and puts `Nexus.dmg` in your Downloads folder. Optional: add `assets/icon.png` (1024×1024) for the app icon.
 
 ## Build for Windows (.exe)
 
@@ -127,21 +157,30 @@ Nexus-HandTrack/
 ├── .gitignore
 ├── README.md
 ├── requirements.txt
-├── track.py
-├── track.spec
-├── icon.png
-├── models
-├── scripts
-│   ├── build.sh
-│   ├── build_mac_app.sh
-│   └── build.bat
-├── venv
-├── build
-└── dist
+├── nexus.py                 # Main application entry point
+├── assets/
+│   └── icon.png            # Application icon
+├── config/
+│   └── nexus.spec          # PyInstaller configuration
+├── docs/
+│   └── UI_COLORS.txt       # UI color reference documentation
+├── scripts/
+│   ├── build.sh            # Cross-platform build script
+│   ├── build_mac_app.sh    # macOS-specific build script
+│   └── build.bat           # Windows build script
+├── models/                  # MediaPipe models (auto-downloaded)
+├── venv/                   # Virtual environment (git-ignored)
+├── build/                   # Build artifacts (git-ignored)
+└── dist/                    # Distribution output (git-ignored)
 ```
 
-- **Root:** App entry (`track.py`), PyInstaller spec (`track.spec`), deps (`requirements.txt`), optional `icon.png`. `models/` is populated by the build (hand/face/object assets).
-- **scripts/:** Build scripts; run from repo root as above. `venv/`, `build/`, `dist/` are created by the build and ignored by git.
+- **Root:** Main application (`nexus.py`), dependencies (`requirements.txt`), documentation (`README.md`)
+- **assets/:** Application assets like icons
+- **config/:** Build configuration files (PyInstaller spec)
+- **docs/:** Documentation files
+- **scripts/:** Build scripts; run from repo root as above
+- **models/:** MediaPipe model files (populated automatically on first run)
+- `venv/`, `build/`, `dist/` are created by the build and ignored by git
 
 ## Controls
 

@@ -44,19 +44,21 @@ jobs:
       run: |
         pyinstaller --noconfirm config/nexus.spec
     
-    - name: Find executable
-      id: find_exe
+    - name: Check for executable
+      shell: pwsh
       run: |
-        $exePath = "dist\Nexus\Nexus.exe"
-        if (-not (Test-Path $exePath)) {
-          $exePath = "dist\Nexus.exe"
+        $found = $false
+        if (Test-Path "dist\Nexus\Nexus.exe") {
+          Write-Host "✅ Found: dist\Nexus\Nexus.exe"
+          $found = $true
         }
-        if (Test-Path $exePath) {
-          Write-Host "exe_path=$exePath" >> $env:GITHUB_OUTPUT
-          Write-Host "✅ Found executable: $exePath"
-        } else {
-          Write-Host "❌ Executable not found"
-          Get-ChildItem -Recurse -Filter "*.exe" | Select-Object FullName
+        if (Test-Path "dist\Nexus.exe") {
+          Write-Host "✅ Found: dist\Nexus.exe"
+          $found = $true
+        }
+        if (-not $found) {
+          Write-Host "❌ Executable not found. Listing dist contents:"
+          Get-ChildItem -Recurse dist | Select-Object FullName
           exit 1
         }
     
@@ -64,21 +66,28 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: Nexus-Windows-Executable
-        path: ${{ steps.find_exe.outputs.exe_path }}
+        path: |
+          dist/Nexus/Nexus.exe
+          dist/Nexus.exe
         retention-days: 30
+        if-no-files-found: error
     
     - name: Upload build info
+      shell: pwsh
       run: |
+        $exePath = "dist\Nexus\Nexus.exe"
+        if (-not (Test-Path $exePath)) {
+          $exePath = "dist\Nexus.exe"
+        }
         $info = @"
         Nexus Windows Build
         ===================
         Build Date: $(Get-Date -Format 'yyyy-MM-dd HH:mm:ss')
         Python Version: $(python --version)
         PyInstaller Version: $(pyinstaller --version)
-        Executable: ${{ steps.find_exe.outputs.exe_path }}
+        Executable: $exePath
         "@
         $info | Out-File -FilePath "build-info.txt" -Encoding utf8
-      shell: pwsh
     
     - name: Upload build info artifact
       uses: actions/upload-artifact@v4
